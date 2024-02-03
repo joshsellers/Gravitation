@@ -3,7 +3,8 @@
 #include <iomanip>
 #include <sstream>
 
-Program::Program(sf::View* camera) {
+Program::Program(sf::RenderWindow* window, sf::View* camera) {
+    this->window = window;
     this->camera = camera;
 
     if (!font.loadFromFile("font.ttf")) {
@@ -13,17 +14,25 @@ Program::Program(sf::View* camera) {
     Object earth(0, 0, 5.9722e24f, 6378000.f);
     earth.id = "earth";
     earth.color = sf::Color::Blue;
+    earth.velocity.y = -29780.f;
     objects.push_back(earth);
 
     Object moon(0, 384467e3, 7.34767309e22, 1.74e6f);
     moon.id = "moon";
     moon.velocity.x = 1023.f;
+    moon.velocity.y = earth.velocity.y;
     objects.push_back(moon);
 
     Object iss(0, -6.7981e6, 4.5e5, 109.f * 100.f);
     iss.id = "iss";
-    iss.velocity.x = -7768.f; //about 7660 m/s irl
+    iss.velocity.x = -7990.f; //about 7660 m/s irl
+    iss.velocity.y = earth.velocity.y;
     objects.push_back(iss);
+
+    Object sun(-1.49598023e11, 0, 1.989e30f, 6.957e8f);
+    sun.id = "sun";
+    sun.color = sf::Color::Yellow;
+    objects.push_back(sun);
 }
 
 void Program::update() {
@@ -59,6 +68,8 @@ void Program::draw(sf::RenderTexture& surface) {
 
         surface.draw(circle);
     }
+
+    if (cameraFocusObject != nullptr) camera->setCenter(cameraFocusObject->pos);
 }
 
 void Program::drawUI(sf::RenderTexture& surface) {
@@ -134,4 +145,45 @@ void Program::drawUI(sf::RenderTexture& surface) {
     versionLabel.setFillColor(sf::Color::White);
     versionLabel.setCharacterSize(16);
     surface.draw(versionLabel);
+
+
+    sf::Vector2f mousePos = window->mapPixelToCoords(sf::Mouse::getPosition(*window), *camera);
+    sf::Vector2f windowMousePos = sf::Vector2f(sf::Mouse::getPosition(*window).x, sf::Mouse::getPosition(*window).y);
+    for (auto& object : objects) {
+        sf::FloatRect objectBounds(object.pos - sf::Vector2f(object.radius, object.radius), sf::Vector2f(object.radius * 2, object.radius * 2));
+        if (objectBounds.contains(mousePos)) {
+            sf::Text toolTipText;
+            toolTipText.setString(object.id);
+            toolTipText.setFont(font);
+            toolTipText.setCharacterSize(24);
+            toolTipText.setFillColor(sf::Color::White);
+            toolTipText.setPosition(windowMousePos - sf::Vector2f(0, 35));
+
+            sf::RectangleShape toolTipBackground;
+            float padding = 2.f;
+            toolTipBackground.setPosition(windowMousePos - sf::Vector2f(0, 30) - sf::Vector2f(padding, padding));
+            toolTipBackground.setSize(sf::Vector2f(toolTipText.getGlobalBounds().width + padding * 4, toolTipText.getGlobalBounds().height + padding * 4));
+            toolTipBackground.setFillColor(sf::Color(0x555555FF));
+            
+            surface.draw(toolTipBackground);
+            surface.draw(toolTipText);            
+            break;
+        }
+    }
+}
+
+void Program::mouseButtonReleased(sf::Event::MouseButtonEvent mouseButtonEvent) {
+    switch (mouseButtonEvent.button) {
+        case sf::Mouse::Right:
+            sf::Vector2f mousePos = window->mapPixelToCoords(sf::Vector2i(mouseButtonEvent.x, mouseButtonEvent.y), *camera);
+
+            for (auto& object : objects) {
+                sf::FloatRect objectBounds(object.pos - sf::Vector2f(object.radius, object.radius), sf::Vector2f(object.radius * 2, object.radius * 2));
+                if (objectBounds.contains(mousePos)) {
+                    cameraFocusObject = &object;
+                    break;
+                }
+            }
+            break;
+    }
 }

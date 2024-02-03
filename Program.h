@@ -5,7 +5,7 @@
 #include <string>
 #include <math.h>
 
-const std::string VERSION = "1.0";
+const std::string VERSION = "1.1";
 
 struct Object {
     Object(float x, float y, float mass, float radius = 10.f, sf::Color color = sf::Color::White) {
@@ -34,21 +34,25 @@ struct Object {
 
 class Program {
 public:
-    Program(sf::View* camera);
+    Program(sf::RenderWindow* window, sf::View* camera);
 
     void update();
     void draw(sf::RenderTexture& surface);
     void drawUI(sf::RenderTexture& surface);
 
+    void mouseButtonReleased(sf::Event::MouseButtonEvent mouseButtonEvent);
+
     float deltaTime = 10.f; //1440.f for 1 day/s
     float zoom = 0.f;
 
 private:
+    sf::RenderWindow* window;
     sf::View* camera;
 
     sf::Font font;
 
     std::vector<Object> objects;
+    Object* cameraFocusObject = nullptr;
 };
 
 #endif 

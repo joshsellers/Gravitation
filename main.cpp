@@ -25,7 +25,7 @@ int main() {
     sf::Sprite uiSurfaceSprite;
     uiSurfaceSprite.setTexture(uiSurfaceTextrure);
 
-    Program program(&camera);
+    Program program(&window, &camera);
 
     program.zoom = 780625.f;
     camera.zoom(program.zoom);
@@ -65,6 +65,7 @@ int main() {
                     }
                     break;
                 case sf::Event::KeyPressed:
+                {
                     const float speed = 100000;
                     switch (event.key.code) {
                         case sf::Keyboard::W:
@@ -87,6 +88,11 @@ int main() {
                             program.deltaTime += 0.5f;
                             break;
                     }
+                    break;
+                }
+                case sf::Event::MouseButtonReleased:
+                    program.mouseButtonReleased(event.mouseButton);
+                    break;
             }
         }
 
